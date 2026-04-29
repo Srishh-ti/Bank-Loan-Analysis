@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Loan Analysis — SQL Project Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d1117;
+    --ink2: #1c2333;
+    --ink3: #2d3748;
+    --gold: #d4a843;
+    --gold-lt: #f0c96a;
+    --gold-dim: rgba(212,168,67,0.12);
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --muted: #8b98a8;
+    --border: rgba(255,255,255,0.06);
+    --card: rgba(255,255,255,0.03);
+    --card-hover: rgba(255,255,255,0.055);
+    --radius: 12px;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'DM Mono', 'Courier New', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: #c9d1d9;
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* === HERO === */
+  .hero {
+    position: relative;
+    padding: 100px 40px 80px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 600px;
+    background: radial-gradient(ellipse at center, rgba(212,168,67,0.15) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(212,168,67,0.3);
+    color: var(--gold-lt);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 32px;
+  }
+
+  .hero-badge::before { content: '◆'; font-size: 8px; }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    color: #eaf0f7;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 20px auto 48px;
+    font-weight: 300;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    background: var(--card);
+  }
+
+  .hero-stat {
+    flex: 1;
+    min-width: 140px;
+    padding: 24px 20px;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .hero-stat:last-child { border-right: none; }
+
+  .hero-stat-val {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .hero-stat-lbl {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  /* === LAYOUT === */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 100px;
+  }
+
+  /* === SECTION HEADERS === */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(212,168,67,0.3), transparent);
+    max-width: 200px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    color: #eaf0f7;
+    margin-bottom: 40px;
+    line-height: 1.2;
+  }
+
+  .section-gap { margin-top: 80px; }
+
+  /* === CARDS === */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .card:hover {
+    background: var(--card-hover);
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .card-val {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    color: #eaf0f7;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .card-sub {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .card-accent { border-color: rgba(212,168,67,0.25); }
+
+  /* === GRIDS === */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+  @media (max-width: 900px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+    .hero { padding: 70px 20px 60px; }
+    .container { padding: 0 20px 80px; }
+  }
+
+  @media (max-width: 560px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .hero-stats { flex-direction: column; }
+    .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  /* === KPI PILL === */
+  .kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+  }
+  .kpi-pill.up   { background: rgba(34,197,94,0.12); color: var(--green); }
+  .kpi-pill.down { background: rgba(239,68,68,0.12);  color: var(--red); }
+  .kpi-pill.neu  { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+  /* === SQL BLOCK === */
+  .sql-wrap {
+    position: relative;
+    margin-top: 16px;
+  }
+
+  .sql-label {
+    position: absolute;
+    top: 12px; right: 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(212,168,67,0.5);
+  }
+
+  pre {
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: #b8c4ce;
+  }
+
+  .kw  { color: #79c0ff; }
+  .fn  { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm  { color: #4d6072; font-style: italic; }
+  .num { color: var(--gold-lt); }
+
+  /* === GOOD/BAD LOAN PANEL === */
+  .loan-panel {
+    border-radius: var(--radius);
+    padding: 32px;
+    border: 1px solid;
+  }
+
+  .loan-panel.good {
+    background: rgba(34,197,94,0.05);
+    border-color: rgba(34,197,94,0.2);
+  }
+
+  .loan-panel.bad {
+    background: rgba(239,68,68,0.05);
+    border-color: rgba(239,68,68,0.2);
+  }
+
+  .loan-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .loan-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .loan-icon.good { background: rgba(34,197,94,0.15); }
+  .loan-icon.bad  { background: rgba(239,68,68,0.15); }
+
+  .loan-title { font-family: var(--font-display); font-size: 1.4rem; color: #eaf0f7; }
+
+  .loan-pct {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+
+  .loan-pct.good { color: var(--green); }
+  .loan-pct.bad  { color: var(--red); }
+
+  .loan-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+
+  .loan-row:last-child { border-bottom: none; }
+  .loan-row-k { color: var(--muted); }
+  .loan-row-v { font-family: var(--font-mono); color: #eaf0f7; font-size: 13px; }
+
+  /* === INSIGHT TABLE === */
+  .insight-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .insight-table th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insight-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+    vertical-align: top;
+  }
+
+  .insight-table tr:hover td { background: var(--card-hover); }
+
+  .insight-num {
+    font-family: var(--font-mono);
+    color: var(--gold);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* === BAR CHART === */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+
+  .bar-row { display: flex; align-items: center; gap: 12px; }
+
+  .bar-label {
+    font-size: 12px;
+    color: var(--muted);
+    width: 130px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 7px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(to right, var(--gold), var(--gold-lt));
+    animation: barGrow 1s ease forwards;
+    transform-origin: left;
+  }
+
+  @keyframes barGrow {
+    from { width: 0 !important; }
+    to   { /* uses inline width */ }
+  }
+
+  .bar-val {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    width: 48px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* === DONUT === */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .donut-svg { flex-shrink: 0; }
+
+  .donut-legend { display: flex; flex-direction: column; gap: 14px; flex: 1; min-width: 160px; }
+
+  .donut-leg-row { display: flex; align-items: center; gap: 10px; }
+
+  .donut-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .donut-leg-label { font-size: 13px; color: var(--muted); flex: 1; }
+  .donut-leg-val { font-family: var(--font-mono); font-size: 12px; color: #eaf0f7; }
+
+  /* === TOOLS LIST === */
+  .tool-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .tool-chip {
+    background: var(--gold-dim);
+    border: 1px solid rgba(212,168,67,0.25);
+    color: var(--gold-lt);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* === FOOTER === */
+  .footer {
+    text-align: center;
+    padding: 60px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .footer span { color: var(--gold); }
+
+  /* === DIVIDER === */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(212,168,67,0.3), transparent);
+    margin: 60px 0;
+  }
+
+  /* Fade in on load */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: none; }
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+  .delay-5 { animation-delay: 0.5s; }
+  .delay-6 { animation-delay: 0.6s; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="hero-badge">SQL · Data Analysis · MySQL</div>
+  <h1>Bank Loan<br><em>Analysis Report</em></h1>
+  <p class="hero-sub">End-to-end SQL analysis of 38,576 loan records — uncovering performance, risk, and borrower trends.</p>
+
+  <div class="hero-stats fade-in delay-2">
+    <div class="hero-stat">
+      <span class="hero-stat-val">38,576</span>
+      <span class="hero-stat-lbl">Total Records</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">$435.8M</span>
+      <span class="hero-stat-lbl">Total Funded</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">86.18%</span>
+      <span class="hero-stat-lbl">Good Loan Rate</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">24</span>
+      <span class="hero-stat-lbl">Data Fields</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main class="container">
+
+  <!-- KPIs -->
+  <div class="section-gap fade-in delay-1">
+    <div class="section-label">01 — Key Metrics</div>
+    <h2 class="section-title">Portfolio KPIs</h2>
+
+    <div class="grid-4">
+      <div class="card card-accent">
+        <div class="card-title">Total Applications</div>
+        <div class="card-val">38,576</div>
+        <div class="card-sub">MTD Dec: <strong style="color:#eaf0f7">4,314</strong></div>
+      </div>
+      <div class="card card-accent">
+        <div class="card-title">Total Funded</div>
+        <div class="card-val">$435.8M</div>
+        <div class="card-sub">MTD Dec: <strong style="color:#eaf0f7">$54.0M</strong></div>
+      </div>
+      <div class="card card-accent">
+        <div class="card-title">Total Collected</div>
+        <div class="card-val">$473.1M</div>
+        <div class="card-sub">Net recovery: <strong style="color:var(--green)">+$37.3M</strong></div>
+      </div>
+      <div class="card card-accent">
+        <div class="card-title">Avg Interest Rate</div>
+        <div class="card-val">12.05%</div>
+        <div class="card-sub">MTD Dec: <strong style="color:#eaf0f7">12.36%</strong></div>
+      </div>
+    </div>
+
+    <div class="sql-wrap" style="margin-top:28px">
+      <div class="sql-label">MySQL</div>
+      <pre><span class="cm">-- Total Funded Amount</span>
+<span class="kw">SELECT</span> <span class="fn">SUM</span>(loan_amount) <span class="kw">AS</span> Total_Funded_Amount <span class="kw">FROM</span> bank_loan_data;
+
+<span class="cm">-- MTD (Month-to-Date) Funded — December</span>
+<span class="kw">SELECT</span> <span class="fn">SUM</span>(loan_amount) <span class="kw">AS</span> Total_Funded_Amount
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">WHERE</span> <span class="fn">MONTH</span>(issue_date) = <span class="num">12</span>;
+
+<span class="cm">-- Month-over-Month trend</span>
+<span class="kw">SELECT</span> <span class="fn">DATE_FORMAT</span>(issue_date, <span class="str">'%m-%Y'</span>) <span class="kw">AS</span> Month,
+       <span class="fn">SUM</span>(loan_amount) <span class="kw">AS</span> Total_Funded_Amount
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> Month <span class="kw">ORDER BY</span> Month;</pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- GOOD vs BAD LOANS -->
+  <div class="fade-in delay-1">
+    <div class="section-label">02 — Loan Quality</div>
+    <h2 class="section-title">Good Loan vs Bad Loan</h2>
+
+    <div class="grid-2" style="margin-bottom:28px">
+      <!-- Good -->
+      <div class="loan-panel good">
+        <div class="loan-panel-head">
+          <div class="loan-icon good">✓</div>
+          <div class="loan-title">Good Loans</div>
+        </div>
+        <div class="loan-pct good">86.18%</div>
+        <div class="loan-row"><span class="loan-row-k">Applications</span><span class="loan-row-v">33,243</span></div>
+        <div class="loan-row"><span class="loan-row-k">Total Funded</span><span class="loan-row-v">$370.2M</span></div>
+        <div class="loan-row"><span class="loan-row-k">Total Received</span><span class="loan-row-v">$435.8M</span></div>
+        <div class="loan-row"><span class="loan-row-k">Status</span><span class="loan-row-v">Fully Paid · Current</span></div>
+      </div>
+
+      <!-- Bad -->
+      <div class="loan-panel bad">
+        <div class="loan-panel-head">
+          <div class="loan-icon bad">✕</div>
+          <div class="loan-title">Bad Loans</div>
+        </div>
+        <div class="loan-pct bad">13.82%</div>
+        <div class="loan-row"><span class="loan-row-k">Applications</span><span class="loan-row-v">5,333</span></div>
+        <div class="loan-row"><span class="loan-row-k">Total Funded</span><span class="loan-row-v">$65.5M</span></div>
+        <div class="loan-row"><span class="loan-row-k">Total Received</span><span class="loan-row-v">$37.3M</span></div>
+        <div class="loan-row"><span class="loan-row-k">Net Loss</span><span class="loan-row-v" style="color:var(--red)">−$28.3M</span></div>
+      </div>
+    </div>
+
+    <div class="sql-wrap">
+      <div class="sql-label">MySQL</div>
+      <pre><span class="cm">-- Good Loan Percentage</span>
+<span class="kw">SELECT</span> (
+  <span class="fn">COUNT</span>(<span class="kw">CASE WHEN</span> loan_status <span class="kw">IN</span> (<span class="str">'Fully Paid'</span>, <span class="str">'Current'</span>) <span class="kw">THEN</span> id <span class="kw">END</span>) * <span class="num">100.0</span>
+) / <span class="fn">COUNT</span>(id) <span class="kw">AS</span> Good_Loan_Percentage
+<span class="kw">FROM</span> bank_loan_data;
+
+<span class="cm">-- Bad Loan Applications & Financials</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(id)         <span class="kw">AS</span> Bad_Loan_Applications,
+       <span class="fn">SUM</span>(loan_amount)   <span class="kw">AS</span> Bad_Loan_Funded_Amount,
+       <span class="fn">SUM</span>(total_payment) <span class="kw">AS</span> Bad_Loan_Amount_Received
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">WHERE</span> loan_status = <span class="str">'Charged Off'</span>;</pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SEGMENTATION -->
+  <div class="fade-in delay-1">
+    <div class="section-label">03 — Segmentation</div>
+    <h2 class="section-title">Borrower & Loan Breakdown</h2>
+
+    <div class="grid-2">
+
+      <!-- Purpose chart -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:20px">Loan Purpose Distribution</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">Debt Consolidation</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+            <div class="bar-val">18,214</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Credit Card</div>
+            <div class="bar-track"><div class="bar-fill" style="width:27%"></div></div>
+            <div class="bar-val">4,998</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Other</div>
+            <div class="bar-track"><div class="bar-fill" style="width:21%"></div></div>
+            <div class="bar-val">3,824</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Home Improvement</div>
+            <div class="bar-track"><div class="bar-fill" style="width:16%"></div></div>
+            <div class="bar-val">2,876</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Major Purchase</div>
+            <div class="bar-track"><div class="bar-fill" style="width:12%"></div></div>
+            <div class="bar-val">2,110</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Small Business</div>
+            <div class="bar-track"><div class="bar-fill" style="width:10%"></div></div>
+            <div class="bar-val">1,776</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Car</div>
+            <div class="bar-track"><div class="bar-fill" style="width:8%"></div></div>
+            <div class="bar-val">1,497</div>
+          </div>
+        </div>
+
+        <div class="sql-wrap">
+          <pre style="font-size:11.5px;padding:14px 18px"><span class="kw">SELECT</span> purpose,
+       <span class="fn">COUNT</span>(id)          <span class="kw">AS</span> Total_Applications,
+       <span class="fn">SUM</span>(loan_amount)   <span class="kw">AS</span> Total_Funded_Amount,
+       <span class="fn">SUM</span>(total_payment) <span class="kw">AS</span> Total_Received
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> purpose <span class="kw">ORDER BY</span> purpose;</pre>
+        </div>
+      </div>
+
+      <!-- Right column stacked -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <!-- Term donut -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Loan Term Split</div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="18"/>
+              <!-- 36 months 73.2% = 230.5 of 314.16 -->
+              <circle cx="55" cy="55" r="40" fill="none" stroke="url(#goldGrad)" stroke-width="18"
+                stroke-dasharray="230.5 83.7" stroke-dashoffset="78.5" stroke-linecap="round"/>
+              <!-- 60 months -->
+              <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(59,130,246,0.6)" stroke-width="18"
+                stroke-dasharray="83 231.2" stroke-dashoffset="-152" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#d4a843"/>
+                  <stop offset="100%" stop-color="#f0c96a"/>
+                </linearGradient>
+              </defs>
+              <text x="55" y="51" text-anchor="middle" font-family="DM Serif Display, serif" font-size="14" fill="#eaf0f7">73%</text>
+              <text x="55" y="64" text-anchor="middle" font-family="Outfit, sans-serif" font-size="8" fill="#8b98a8">36 mo</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="donut-leg-row">
+                <div class="donut-dot" style="background:var(--gold)"></div>
+                <div class="donut-leg-label">36 Months</div>
+                <div class="donut-leg-val">28,237</div>
+              </div>
+              <div class="donut-leg-row">
+                <div class="donut-dot" style="background:rgba(59,130,246,0.7)"></div>
+                <div class="donut-leg-label">60 Months</div>
+                <div class="donut-leg-val">10,339</div>
+              </div>
+            </div>
+          </div>
+          <div class="sql-wrap">
+            <pre style="font-size:11.5px;padding:14px 18px"><span class="kw">SELECT</span> term, <span class="fn">COUNT</span>(id) <span class="kw">AS</span> Total_Applications,
+       <span class="fn">SUM</span>(loan_amount) <span class="kw">AS</span> Total_Funded
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> term <span class="kw">ORDER BY</span> term;</pre>
+          </div>
+        </div>
+
+        <!-- Home ownership -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:16px">Home Ownership</div>
+          <div class="bar-chart">
+            <div class="bar-row">
+              <div class="bar-label">RENT</div>
+              <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+              <div class="bar-val">18,439</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label">MORTGAGE</div>
+              <div class="bar-track"><div class="bar-fill" style="width:93%"></div></div>
+              <div class="bar-val">17,198</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-label">OWN</div>
+              <div class="bar-track"><div class="bar-fill" style="width:15%"></div></div>
+              <div class="bar-val">2,838</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- REGIONAL & EMPLOYMENT -->
+  <div class="fade-in delay-1">
+    <div class="section-label">04 — Regional & Employment</div>
+    <h2 class="section-title">Geographic & Workforce Trends</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:20px">Top States by Applications</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">California (CA)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+            <div class="bar-val">6,894</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">New York (NY)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:54%"></div></div>
+            <div class="bar-val">3,701</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Florida (FL)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:40%"></div></div>
+            <div class="bar-val">2,773</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Texas (TX)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:39%"></div></div>
+            <div class="bar-val">2,664</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">New Jersey (NJ)</div>
+            <div class="bar-track"><div class="bar-fill" style="width:26%"></div></div>
+            <div class="bar-val">1,822</div>
+          </div>
+        </div>
+        <div class="sql-wrap">
+          <pre style="font-size:11.5px;padding:14px 18px"><span class="kw">SELECT</span> address_state <span class="kw">AS</span> State,
+       <span class="fn">COUNT</span>(id)          <span class="kw">AS</span> Total_Applications,
+       <span class="fn">SUM</span>(loan_amount)   <span class="kw">AS</span> Total_Funded
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> State <span class="kw">ORDER BY</span> State;</pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:20px">Employment Length Analysis</div>
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label">10+ years</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+            <div class="bar-val">8,870</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">&lt; 1 year</div>
+            <div class="bar-track"><div class="bar-fill" style="width:52%"></div></div>
+            <div class="bar-val">4,575</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">2 years</div>
+            <div class="bar-track"><div class="bar-fill" style="width:49%"></div></div>
+            <div class="bar-val">4,382</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">3 years</div>
+            <div class="bar-track"><div class="bar-fill" style="width:46%"></div></div>
+            <div class="bar-val">4,088</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">4 years</div>
+            <div class="bar-track"><div class="bar-fill" style="width:39%"></div></div>
+            <div class="bar-val">3,428</div>
+          </div>
+        </div>
+        <div class="sql-wrap">
+          <pre style="font-size:11.5px;padding:14px 18px"><span class="kw">SELECT</span> emp_length,
+       <span class="fn">COUNT</span>(id)          <span class="kw">AS</span> Total_Applications,
+       <span class="fn">SUM</span>(loan_amount)   <span class="kw">AS</span> Total_Funded
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> emp_length
+<span class="kw">ORDER BY</span> emp_length;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- LOAN STATUS GRID -->
+  <div class="fade-in delay-1">
+    <div class="section-label">05 — Status Grid</div>
+    <h2 class="section-title">Loan Status Grid View</h2>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="insight-table">
+        <thead>
+          <tr>
+            <th>Loan Status</th>
+            <th>Applications</th>
+            <th>Funded Amount</th>
+            <th>Amount Received</th>
+            <th>Avg Int. Rate</th>
+            <th>Avg DTI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="kpi-pill up">✓ Fully Paid</span></td>
+            <td style="font-family:var(--font-mono);font-size:13px">32,145</td>
+            <td style="font-family:var(--font-mono);font-size:13px">~$351M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">~$411M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">11.6%</td>
+            <td style="font-family:var(--font-mono);font-size:13px">12.8%</td>
+          </tr>
+          <tr>
+            <td><span class="kpi-pill neu">◉ Current</span></td>
+            <td style="font-family:var(--font-mono);font-size:13px">1,098</td>
+            <td style="font-family:var(--font-mono);font-size:13px">~$19M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">~$24M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">12.2%</td>
+            <td style="font-family:var(--font-mono);font-size:13px">13.1%</td>
+          </tr>
+          <tr>
+            <td><span class="kpi-pill down">✕ Charged Off</span></td>
+            <td style="font-family:var(--font-mono);font-size:13px">5,333</td>
+            <td style="font-family:var(--font-mono);font-size:13px">$65.5M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">$37.3M</td>
+            <td style="font-family:var(--font-mono);font-size:13px">13.9%</td>
+            <td style="font-family:var(--font-mono);font-size:13px">14.7%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sql-wrap" style="margin-top:20px">
+      <pre><span class="kw">SELECT</span>
+  loan_status,
+  <span class="fn">COUNT</span>(id)            <span class="kw">AS</span> Total_Loan_Applications,
+  <span class="fn">SUM</span>(loan_amount)     <span class="kw">AS</span> Total_Funded_Amount,
+  <span class="fn">SUM</span>(total_payment)   <span class="kw">AS</span> Total_Amount_Received,
+  <span class="fn">AVG</span>(int_rate * <span class="num">100</span>)  <span class="kw">AS</span> Avg_Int_Rate,
+  <span class="fn">AVG</span>(dti * <span class="num">100</span>)      <span class="kw">AS</span> Avg_DTI
+<span class="kw">FROM</span> bank_loan_data
+<span class="kw">GROUP BY</span> loan_status;</pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- KEY INSIGHTS -->
+  <div class="fade-in delay-1">
+    <div class="section-label">06 — Key Findings</div>
+    <h2 class="section-title">10 Critical Insights</h2>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="insight-table">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th>Insight</th>
+            <th>Metric</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="insight-num">01</td>
+            <td>86.18% of loans are good (Fully Paid or Current), reflecting strong underwriting standards.</td>
+            <td><span class="kpi-pill up">86.18%</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">02</td>
+            <td>Charged-off loans caused a ~$28.3M net loss — highlighting the cost of poor early risk scoring.</td>
+            <td><span class="kpi-pill down">−$28.3M</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">03</td>
+            <td>Debt consolidation dominates at 47.2% of all loan purposes — borrowers are refinancing existing debt.</td>
+            <td><span class="kpi-pill neu">47.2%</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">04</td>
+            <td>California leads all states with 17.9% of total applications, far ahead of any other state.</td>
+            <td><span class="kpi-pill neu">6,894</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">05</td>
+            <td>73% of borrowers prefer 36-month terms, prioritizing faster repayment over lower monthly payments.</td>
+            <td><span class="kpi-pill up">73%</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">06</td>
+            <td>Average interest rate is 12.05%, with December applications carrying a slightly elevated 12.36%.</td>
+            <td><span class="kpi-pill neu">12.05%</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">07</td>
+            <td>Renters are the largest borrower group at 47.8%, indicating limited access to asset-backed credit.</td>
+            <td><span class="kpi-pill neu">47.8%</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">08</td>
+            <td>10+ year employed borrowers are the most active applicants, pointing to income stability as a key driver.</td>
+            <td><span class="kpi-pill up">8,870</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">09</td>
+            <td>Total collections exceed disbursements by $37.3M, confirming the portfolio generates positive net income.</td>
+            <td><span class="kpi-pill up">+$37.3M</span></td>
+          </tr>
+          <tr>
+            <td class="insight-num">10</td>
+            <td>December sees peak volumes with 4,314 applications and $54M funded — driven by year-end demand.</td>
+            <td><span class="kpi-pill neu">Dec Peak</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DATA CLEANING -->
+  <div class="fade-in delay-1">
+    <div class="section-label">07 — Setup</div>
+    <h2 class="section-title">Data Cleaning & Preparation</h2>
+
+    <div class="grid-2">
+      <div>
+        <p style="color:var(--muted);margin-bottom:20px;font-size:14px">Before analysis, the raw dataset required encoding fixes and date column type conversions to enable proper SQL date functions.</p>
+        <div class="sql-wrap">
+          <pre><span class="cm">-- Fix encoding on ID column</span>
+<span class="kw">ALTER TABLE</span> bank_loan_data
+<span class="kw">CHANGE COLUMN</span> ï»¿id id <span class="kw">INT</span>;
+
+<span class="cm">-- Convert date strings → DATE</span>
+<span class="kw">UPDATE</span> bank_loan_data <span class="kw">SET</span>
+  issue_date = <span class="fn">STR_TO_DATE</span>(issue_date, <span class="str">'%d-%m-%Y'</span>),
+  last_credit_pull_date = <span class="fn">STR_TO_DATE</span>(last_credit_pull_date, <span class="str">'%d-%m-%Y'</span>),
+  last_payment_date = <span class="fn">STR_TO_DATE</span>(last_payment_date, <span class="str">'%d-%m-%Y'</span>),
+  next_payment_date = <span class="fn">STR_TO_DATE</span>(next_payment_date, <span class="str">'%d-%m-%Y'</span>);
+
+<span class="cm">-- Alter columns to proper DATE type</span>
+<span class="kw">ALTER TABLE</span> bank_loan_data
+<span class="kw">MODIFY COLUMN</span> issue_date            <span class="kw">DATE</span>,
+<span class="kw">MODIFY COLUMN</span> last_credit_pull_date <span class="kw">DATE</span>,
+<span class="kw">MODIFY COLUMN</span> last_payment_date     <span class="kw">DATE</span>,
+<span class="kw">MODIFY COLUMN</span> next_payment_date     <span class="kw">DATE</span>;</pre>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="card-title">Database</div>
+          <div style="font-family:var(--font-mono);color:#eaf0f7;font-size:1.1rem;margin-top:4px">MySQL</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Table</div>
+          <div style="font-family:var(--font-mono);color:#eaf0f7;font-size:1rem;margin-top:4px">bank_loan_data</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Records</div>
+          <div style="font-family:var(--font-mono);color:var(--gold);font-size:1.3rem;margin-top:4px">38,576 rows</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Fields</div>
+          <div style="font-family:var(--font-mono);color:var(--gold);font-size:1.3rem;margin-top:4px">24 columns</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg DTI</div>
+          <div style="font-family:var(--font-mono);color:#eaf0f7;font-size:1.3rem;margin-top:4px">13.33%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TOOLS -->
+  <div class="fade-in delay-1">
+    <div class="section-label">08 — Stack</div>
+    <h2 class="section-title">Tools & Technologies</h2>
+    <div class="tool-list">
+      <div class="tool-chip">MySQL 8.0</div>
+      <div class="tool-chip">SQL Aggregations</div>
+      <div class="tool-chip">Date Functions</div>
+      <div class="tool-chip">CASE Expressions</div>
+      <div class="tool-chip">GROUP BY / ORDER BY</div>
+      <div class="tool-chip">STR_TO_DATE</div>
+      <div class="tool-chip">Window Functions</div>
+      <div class="tool-chip">Data Cleaning</div>
+      <div class="tool-chip">KPI Analysis</div>
+      <div class="tool-chip">Risk Segmentation</div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Bank Loan SQL Analysis &nbsp;·&nbsp; <span>MySQL Project</span> &nbsp;·&nbsp; 38,576 Records Analysed</p>
+  <p style="margin-top:8px;font-size:12px">Built with MySQL · Data Analysis · GitHub Portfolio</p>
+</footer>
+
+</body>
+</html>
